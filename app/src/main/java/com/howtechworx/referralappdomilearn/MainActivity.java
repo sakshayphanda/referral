@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -35,12 +36,15 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestore registrationDB,referredUsersDB,emailsDB;
     private HashMap<String,Object> newUser = new HashMap<>();
     private TextView amount;
-    private static List<String> userKeys = new ArrayList<>();
+    private  List<String> userKeys = new ArrayList<>();
     private Integer INITIAL_AMOUNT =100;
     private Integer BONUS =100;
-    private static String CURRENT_USER_KEY,CURRENT_USER_EMAIL;
-    private Integer S_NO=0;
-    private static List<UserData> usersList = new ArrayList<>();
+    private  static String CURRENT_USER_KEY;
+    private List<UserData> usersList = new ArrayList<>();
+    private EditText code;
+    private Button clear;
+    private String UserEmail;
+    private TextView copy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             for (DocumentSnapshot document : task.getResult()) {
                                 Log.d("", document.getId() + " => " + document.getData());
-                              //  userKeys.add(document.getId());
                                 UserData userData= document.toObject(UserData.class).withId(document.getId());
                                 userKeys.add(userData.getId());
                                 usersList.add(userData);
@@ -72,13 +75,42 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+    private void getUserDataAgain(final String CURRENT_USER_KEY, final String referralCode){
+        userKeys.clear();
+        usersList.clear();
+        registrationDB.collection("Registration")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (DocumentSnapshot document : task.getResult()) {
+                                Log.d("TAG", document.getId() + " => " + document.getData());
+                                //  userKeys.add(document.getId());
+                                UserData userData= document.toObject(UserData.class).withId(document.getId());
+                                userKeys.add(userData.getId());
+                                usersList.add(userData);
+                            }
+                            UpdateDataReferredTo(CURRENT_USER_KEY);
+                            UpdateDataReferredBy(referralCode);
 
-        private void initUI() {
+                        } else {
+                            Log.d("", "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
+    }
+
+
+    private void initUI() {
         name = findViewById(R.id.name);
         email = findViewById(R.id.email);
         submit = findViewById(R.id.submit);
+        clear = findViewById(R.id.submit2);
         referral = findViewById(R.id.referral);
         amount = findViewById(R.id.amount);
+        code= findViewById(R.id.referCode);
+        copy =findViewById(R.id.copy);
 
         registrationDB = FirebaseFirestore.getInstance();
         referredUsersDB = FirebaseFirestore.getInstance();
@@ -86,13 +118,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setListeners() {
-        submit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                convertToString(name,email,referral);
-                addUser();
-            }
-        });
+            submit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    //getUserDataAgain(CURRENT_USER_KEY,referralCode);
+                    convertToString(name, email, referral);
+                    addUser();
+                }
+            });
+
+
+            clear.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    clearViews();
+                    Toast.makeText(MainActivity.this, "Cleared", Toast.LENGTH_SHORT).show();
+                }
+    });
+    }
+
+    private void clearViews() {
+        email.setText("");
+        email.setHint("Enter your Email id*");
+        name.setText("");
+        name.setHint("Enter your Name*");
+        referral.setText("");
+        referral.setHint("Referral Code(optional )");
+        amount.setText("-");
+        code.setText("");
+        code.setHint("Use this code to refer others");
+        copy.setVisibility(View.GONE);
     }
 
     private void convertToString(EditText name, EditText email, EditText referral) {
@@ -102,17 +159,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addUser() {
+
         if(userName.isEmpty()&& userEmail.isEmpty())
             Toast.makeText(MainActivity.this, "Enter the above details", Toast.LENGTH_SHORT).show();
 
         else if(userEmail.isEmpty() || userName.isEmpty())
             Toast.makeText(MainActivity.this, "You missed a field", Toast.LENGTH_SHORT).show();
 
-   /*     else if(emailIDs.contains(userEmail))
-            Toast.makeText(this, "This email id is already registered", Toast.LENGTH_SHORT).show();
-*/
         else
         {
+            for (final UserData d : usersList) {
+                if (d.getEmail() != null && d.getEmail().contains(userEmail)) {
+                    Toast.makeText(this, "This email id is already registered", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
          //   emailIDs.add(userEmail);
             newUser.put("name",userName);
             newUser.put("email",userEmail);
@@ -126,10 +187,11 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "User Registered", Toast.LENGTH_SHORT).show();
 
                             CURRENT_USER_KEY = documentReference.getId();
-                            Toast.makeText(MainActivity.this, CURRENT_USER_KEY+"1", Toast.LENGTH_SHORT).show();
+                            code.setText(CURRENT_USER_KEY);
+                            copy.setVisibility(View.VISIBLE);
 
                             searchReferral(referralCode,userKeys,CURRENT_USER_KEY);
-
+                            getUserDataAgain();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -139,6 +201,30 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
+    }
+
+    private void getUserDataAgain() {
+        userKeys.clear();
+        usersList.clear();
+        registrationDB.collection("Registration")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (DocumentSnapshot document : task.getResult()) {
+                                Log.d("TAG", document.getId() + " => " + document.getData());
+                                //  userKeys.add(document.getId());
+                                UserData userData= document.toObject(UserData.class).withId(document.getId());
+                                userKeys.add(userData.getId());
+                                usersList.add(userData);
+                            }
+                        } else {
+                            Log.d("", "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
+
     }
 
     private void searchReferral(String referralCode, List<String> userKeys, String CURRENT_USER_KEY) {
@@ -159,68 +245,84 @@ public class MainActivity extends AppCompatActivity {
         if(found)
         {
 
-            HashMap<String,String> id = new HashMap<>();
-            id.put("referred by :",referralCode);
-            referredUsersDB.collection("Referred Users")
-                    .add(id);
+            for (final UserData d : usersList) {
+                if (d.getId() != null && d.getId().contains(referralCode)) {
 
-         //   UpdateDataReferredBy(referralCode);
+                    UserEmail = d.getEmail();
+                }
+            }
+
+            HashMap<String,String> id = new HashMap<>();
+            id.put("key :",referralCode);
+            referredUsersDB.collection("Referrer")
+                    .document(UserEmail)
+                    .set(id);
+            getUserDataAgain(CURRENT_USER_KEY,referralCode);
+            UpdateDataReferredBy(referralCode);
             UpdateDataReferredTo(CURRENT_USER_KEY);
-            Toast.makeText(this, "ref", Toast.LENGTH_SHORT).show();
+
+          //  Toast.makeText(MainActivity.this, "Accounts Updated successfully", Toast.LENGTH_SHORT).show();
+
         }
 
         else
         {
-            Toast.makeText(this, "no refer", Toast.LENGTH_SHORT).show();
-        //    int finalAmount = INITIAL_AMOUNT;
-        //    amount.setText(finalAmount + "");
+            Toast.makeText(this, "Incorrect key or reference key missing", Toast.LENGTH_SHORT).show();
+            int finalAmount = INITIAL_AMOUNT;
+            final int amt=finalAmount;
+            amount.setText(String.valueOf(amt));
             amount.setVisibility(View.VISIBLE);
         }
     }
 
     private void UpdateDataReferredTo(String CURRENT_USER_KEY) {
-        Toast.makeText(this, CURRENT_USER_KEY +"2", Toast.LENGTH_SHORT).show();
 
-        for( final UserData d : usersList){
-            Toast.makeText(this, CURRENT_USER_KEY +"3", Toast.LENGTH_SHORT).show();
-            if(d.getId().contains(CURRENT_USER_KEY))
-            {
-                Toast.makeText(this, CURRENT_USER_KEY +"4", Toast.LENGTH_SHORT).show();
+        for (final UserData d : usersList) {
+            if (d.getId()!=null && d.getId().contains(CURRENT_USER_KEY)) {
                 int finalAmount = d.getAmount() + BONUS;
+                Log.d("Final Amount", finalAmount + "");
+                final Integer amt = finalAmount;
                 DocumentReference documentReference = referredUsersDB.collection("Registration").document(CURRENT_USER_KEY);
-                documentReference.update("amount",finalAmount +"")
-                        .addOnSuccessListener(new OnSuccessListener < Void > () {
+                documentReference.update("amount", finalAmount)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @SuppressLint("SetTextI18n")
                             @Override
                             public void onSuccess(Void aVoid) {
-                                Toast.makeText(MainActivity.this, "Accounts Updated Successfully",
-                                        Toast.LENGTH_SHORT).show();
                                 Toast.makeText(MainActivity.this,
-                                        "Referral code matched ,you get a bonus", Toast.LENGTH_SHORT).show();
-                                amount.setText(d.getAmount()+" ");
+                                        "Referral code matched you get a bonus", Toast.LENGTH_SHORT).show();
+                                amount.setText(String.valueOf(amt));
                                 amount.setVisibility(View.VISIBLE);
                             }
                         });
+
             }
         }
     }
 
     private void UpdateDataReferredBy(String referralCode) {
 
-        for( UserData d : usersList){
-            if(d.getId() != null && d.getId().contains(referralCode))
-            {
-                int finalAmount = d.getAmount() + BONUS;
-                DocumentReference registration = registrationDB.collection("Registration").document(referralCode);
-                registration.update("amount", finalAmount+"")
-                        .addOnSuccessListener(new OnSuccessListener < Void > () {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                Toast.makeText(MainActivity.this, "Accounts Updated Successfully",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
+        try {
+
+
+            for (UserData d : usersList) {
+                if (d.getId() != null && d.getId().contains(referralCode)) {
+                    Integer finalAmount = d.getAmount() + BONUS;
+                    DocumentReference registration = registrationDB.collection("Registration").document(referralCode);
+                    registration.update("amount", finalAmount)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Toast.makeText(MainActivity.this, "Referrer also got bonus amount", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                }
             }
+
+        }
+        catch (IllegalArgumentException ex )
+        {
+
         }
 
-}}
+    }
+}
