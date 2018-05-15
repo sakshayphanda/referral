@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -33,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText name,email,referral;
     private Button submit;
     private String userEmail="",userName="",referralCode="";
-    private FirebaseFirestore registrationDB,referredUsersDB,emailsDB;
+    private FirebaseFirestore registrationDB,referredUsersDB;
     private HashMap<String,Object> newUser = new HashMap<>();
     private TextView amount;
     private  List<String> userKeys = new ArrayList<>();
@@ -86,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             for (DocumentSnapshot document : task.getResult()) {
                                 Log.d("TAG", document.getId() + " => " + document.getData());
-                                //  userKeys.add(document.getId());
                                 UserData userData= document.toObject(UserData.class).withId(document.getId());
                                 userKeys.add(userData.getId());
                                 usersList.add(userData);
@@ -101,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-
     private void initUI() {
         name = findViewById(R.id.name);
         email = findViewById(R.id.email);
@@ -114,15 +111,12 @@ public class MainActivity extends AppCompatActivity {
 
         registrationDB = FirebaseFirestore.getInstance();
         referredUsersDB = FirebaseFirestore.getInstance();
-       // emailsDB = FirebaseFirestore.getInstance();
     }
 
     private void setListeners() {
             submit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
-                    //getUserDataAgain(CURRENT_USER_KEY,referralCode);
                     convertToString(name, email, referral);
                     addUser();
                 }
@@ -174,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
             }
-         //   emailIDs.add(userEmail);
             newUser.put("name",userName);
             newUser.put("email",userEmail);
             newUser.put("referral",referralCode);
@@ -214,7 +207,6 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             for (DocumentSnapshot document : task.getResult()) {
                                 Log.d("TAG", document.getId() + " => " + document.getData());
-                                //  userKeys.add(document.getId());
                                 UserData userData= document.toObject(UserData.class).withId(document.getId());
                                 userKeys.add(userData.getId());
                                 usersList.add(userData);
@@ -224,17 +216,15 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
-
     }
 
     private void searchReferral(String referralCode, List<String> userKeys, String CURRENT_USER_KEY) {
         boolean found = false;
 
         Iterator iterator = userKeys.iterator();
-        String currentCode="";
+        String currentCode;
 
-        while(iterator.hasNext())
-        {
+        while(iterator.hasNext()) {
             currentCode= (String) iterator.next();
             if(currentCode.equals(referralCode)) {
                 found = true;
@@ -242,16 +232,13 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        if(found)
-        {
-
+        if(found) {
             for (final UserData d : usersList) {
                 if (d.getId() != null && d.getId().contains(referralCode)) {
 
                     UserEmail = d.getEmail();
                 }
             }
-
             HashMap<String,String> id = new HashMap<>();
             id.put("key :",referralCode);
             referredUsersDB.collection("Referrer")
@@ -260,13 +247,9 @@ public class MainActivity extends AppCompatActivity {
             getUserDataAgain(CURRENT_USER_KEY,referralCode);
             UpdateDataReferredBy(referralCode);
             UpdateDataReferredTo(CURRENT_USER_KEY);
-
-          //  Toast.makeText(MainActivity.this, "Accounts Updated successfully", Toast.LENGTH_SHORT).show();
-
         }
 
-        else
-        {
+        else {
             Toast.makeText(this, "Incorrect key or reference key missing", Toast.LENGTH_SHORT).show();
             int finalAmount = INITIAL_AMOUNT;
             final int amt=finalAmount;
@@ -293,17 +276,12 @@ public class MainActivity extends AppCompatActivity {
                                 amount.setText(String.valueOf(amt));
                                 amount.setVisibility(View.VISIBLE);
                             }
-                        });
-
-            }
-        }
+                        }); } }
     }
 
     private void UpdateDataReferredBy(String referralCode) {
 
         try {
-
-
             for (UserData d : usersList) {
                 if (d.getId() != null && d.getId().contains(referralCode)) {
                     Integer finalAmount = d.getAmount() + BONUS;
@@ -312,7 +290,8 @@ public class MainActivity extends AppCompatActivity {
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
-                                    Toast.makeText(MainActivity.this, "Referrer also got bonus amount", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this,
+                                            "Referrer also got bonus amount", Toast.LENGTH_SHORT).show();
                                 }
                             });
                 }
@@ -321,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
         }
         catch (IllegalArgumentException ex )
         {
-
+            Log.d("-------","");
         }
 
     }
