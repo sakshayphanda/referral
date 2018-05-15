@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1068852165941",
+    "firebase_url": "https://referralappdomilearn.firebaseio.com",
+    "project_id": "referralappdomilearn",
+    "storage_bucket": "referralappdomilearn.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1068852165941:android:b7af68000e561203",
+        "android_client_info": {
+          "package_name": "com.howtechworx.referralappdomilearn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1068852165941-qc1f7lv017rao62kcj2ge6nsobmntkub.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.howtechworx.referralappdomilearn",
+            "certificate_hash": "4a44fb263925802b22dd836d0e5d47d2d0af23f2"
+          }
+        },
+        {
+          "client_id": "1068852165941-bpk283dousirb62sh0s5msgeh1o2gj29.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6GtBJO_eFji0RneVb46yDTgNxFxkO5tU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1068852165941-bpk283dousirb62sh0s5msgeh1o2gj29.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
